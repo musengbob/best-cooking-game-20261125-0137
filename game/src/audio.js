@@ -53,6 +53,13 @@ export const sfx = {
   ding() {
     blip(980, 0.2, 'triangle', 0.14, 980);
   },
+  tick() {
+    blip(1250, 0.06, 'square', 0.07, 1250);
+  },
+  error() {
+    blip(180, 0.18, 'square', 0.12, 120);
+    setTimeout(() => blip(150, 0.2, 'square', 0.1, 100), 110);
+  },
   fail() {
     blip(220, 0.35, 'sawtooth', 0.12, 110);
   },

@@ -2,13 +2,15 @@
 // mouse (click-to-move, click a station to walk to it and use it).
 // This module only collects raw input; main.js decides what it means.
 
-export function createInput(canvas, onInteract, onAnyKey) {
+export function createInput(canvas, onInteract, onAnyKey, onDiscard, onSelectBin) {
   const input = {
     keys: new Set(),
     // Normalised movement direction for this frame, read by the loop.
     moveX: 0,
     moveY: 0,
     interactPressed: false,
+    // True while E is held down — chopping reads this every frame.
+    eHeld: false,
   };
 
   function recomputeMove() {
@@ -19,6 +21,7 @@ export function createInput(canvas, onInteract, onAnyKey) {
     const down = k.has('arrowdown') || k.has('s');
     input.moveX = (right ? 1 : 0) - (left ? 1 : 0);
     input.moveY = (down ? 1 : 0) - (up ? 1 : 0);
+    input.eHeld = k.has('e');
   }
 
   window.addEventListener('keydown', (event) => {
@@ -29,6 +32,11 @@ export function createInput(canvas, onInteract, onAnyKey) {
     if (key === 'e' && !event.repeat) {
       input.interactPressed = true;
       onInteract();
+    }
+    // Q bins the last carried item; digits 1-7 pick a pantry bin.
+    if (key === 'q' && !event.repeat && typeof onDiscard === 'function') onDiscard();
+    if (/^[1-7]$/.test(key) && !event.repeat && typeof onSelectBin === 'function') {
+      onSelectBin(Number(key) - 1);
     }
     if (key === 'enter' || key === ' ') onAnyKey();
     input.keys.add(key);

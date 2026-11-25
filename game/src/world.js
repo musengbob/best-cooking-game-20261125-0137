@@ -94,8 +94,13 @@ export function updatePlayer(world, dirX, dirY, dt) {
 
 export function setMoveTarget(world, x, y) {
   const b = floorBounds();
+  // The target is the chef's CENTRE, so it must stay a full radius
+  // inside the floor — clamping to the raw floor edge made the chef
+  // stall 16px short of any station click (clampToFloor pushed them
+  // back every frame) and the arrival check never fired.
+  const r = world.player.radius;
   world.player.target = {
-    x: Math.max(b.left, Math.min(b.right, x)),
-    y: Math.max(b.top, Math.min(b.bottom, y)),
+    x: Math.max(b.left + r, Math.min(b.right - r, x)),
+    y: Math.max(b.top + r, Math.min(b.bottom - r, y)),
   };
 }

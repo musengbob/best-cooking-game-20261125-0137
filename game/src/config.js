@@ -38,7 +38,11 @@ export const INGREDIENTS = {
   cheese: { name: 'Cheese', colour: '#ffd166', step: 'cook', cookSeconds: 4.0 },
   pasta: { name: 'Pasta', colour: '#f4d58d', step: 'cook', cookSeconds: 6.0 },
   patty: { name: 'Patty', colour: '#8a5a2b', step: 'cook', cookSeconds: 5.0 },
+  onion: { name: 'Onion', colour: '#f1faee', step: 'chop', chopSeconds: 2.2 },
 };
+
+// The order the pantry bins cycle through when you press E.
+export const PANTRY_ORDER = ['tomato', 'lettuce', 'onion', 'patty', 'bread', 'cheese', 'pasta'];
 
 // Recipes: a name, the ingredients in assembly order, base points and
 // the seconds a customer will wait. Longer recipes pay more.
@@ -65,6 +69,13 @@ export const RECIPES = [
     waitSeconds: 55,
   },
   {
+    id: 'cheesy-pasta',
+    name: 'Cheesy Pasta',
+    ingredients: ['pasta', 'cheese'],
+    points: 170,
+    waitSeconds: 60,
+  },
+  {
     id: 'pasta-special',
     name: 'Pasta Special',
     ingredients: ['pasta', 'tomato', 'cheese'],
@@ -72,17 +83,38 @@ export const RECIPES = [
     waitSeconds: 65,
   },
   {
-    id: 'thyme-burger',
-    name: 'Thyme Burger',
-    ingredients: ['bread', 'patty', 'lettuce', 'cheese'],
-    points: 260,
-    waitSeconds: 75,
+    id: 'classic-burger',
+    name: 'Classic Burger',
+    ingredients: ['bread', 'patty', 'lettuce'],
+    points: 180,
+    waitSeconds: 60,
+  },
+  {
+    id: 'cheese-burger',
+    name: 'Cheese Burger',
+    ingredients: ['bread', 'patty', 'cheese'],
+    points: 200,
+    waitSeconds: 60,
+  },
+  {
+    id: 'double-stack',
+    name: 'Double Stack',
+    ingredients: ['bread', 'patty', 'patty', 'cheese', 'tomato'],
+    points: 320,
+    waitSeconds: 85,
+  },
+  {
+    id: 'veggie-delight',
+    name: 'Veggie Delight',
+    ingredients: ['bread', 'lettuce', 'tomato', 'onion', 'cheese'],
+    points: 300,
+    waitSeconds: 85,
   },
 ];
 
 // Order pacing: seconds between new orders at the start and at the end
 // of the shift; the spawn interval lerps between them.
-export const ORDER_PACING = { startInterval: 16, endInterval: 8, maxOnBoard: 4 };
+export const ORDER_PACING = { startInterval: 25, endInterval: 12, maxOnBoard: 4 };
 
 // The look: warm bistro wood, cream tiles, ember orange accents.
 export const PALETTE = {

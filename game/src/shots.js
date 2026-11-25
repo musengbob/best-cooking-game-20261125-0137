@@ -3,9 +3,14 @@
 // screenshots are reproducible: title + full kitchen, a dish mid-assembly
 // with a timer running, and the shift-end screen. The seed only varies
 // which sample orders appear; seed=1 is the shipped set.
+//
+// baseState mirrors main.js freshState() exactly (including every
+// freshKitchen() field): the play shot runs the live loop, so a missing
+// field — plate, burners, particles — crashes updateMechanics.
 
 import { RECIPES, SHIFT_SECONDS } from './config.js';
 import { createWorld } from './world.js';
+import { freshKitchen } from './mechanics.js';
 
 function sampleOrders() {
   return [
@@ -16,6 +21,7 @@ function sampleOrders() {
 }
 
 function baseState(screen) {
+  const kitchen = freshKitchen();
   return {
     screen,
     now: 0,
@@ -27,9 +33,23 @@ function baseState(screen) {
     served: 0,
     missed: 0,
     orders: [],
-    carried: [],
+    carried: kitchen.carried,
+    plate: kitchen.plate,
+    burners: kitchen.burners,
+    pantryIndex: kitchen.pantryIndex,
+    chop: kitchen.chop,
+    particles: kitchen.particles,
+    floaters: kitchen.floaters,
+    shake: kitchen.shake,
+    servedAttempts: kitchen.servedAttempts,
+    correctServes: kitchen.correctServes,
+    lastTickBeat: kitchen.lastTickBeat,
+    sizzleTimer: kitchen.sizzleTimer,
+    chopSoundTimer: kitchen.chopSoundTimer,
     toast: null,
     world: createWorld(),
+    nextOrderIn: 6,
+    orderSeq: 0,
   };
 }
 
@@ -42,10 +62,16 @@ export function stateForShot(shot) {
     state.bestCombo = 3;
     state.served = 4;
     state.orders = sampleOrders();
-    // Chef stands at the assembly counter with a half-built dish.
+    // Chef stands at the assembly counter with a half-built dish: one
+    // tomato already plated, a chopped lettuce in hand.
     state.world.player.x = 621;
     state.world.player.y = 210;
-    state.carried = ['tomato', 'lettuce'];
+    state.plate = [{ key: 'tomato', prep: 'ready' }];
+    state.carried = [{ key: 'lettuce', prep: 'ready' }];
+    // Burner 0 mid-cook (ring half full), burner 1 burnt — shows both
+    // stove states in the screenshot.
+    state.burners[0] = { item: { key: 'patty', prep: 'raw' }, progress: 2.5, cooked: false, burnt: false };
+    state.burners[1] = { item: { key: 'cheese', prep: 'burnt' }, progress: 6.0, cooked: true, burnt: true };
     state.toast = { text: 'Plating Garden Salad… 2 of 2 ready!', life: 2 };
     return state;
   }

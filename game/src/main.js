@@ -10,6 +10,14 @@ import { drawFrame } from './render.js';
 import { sfx } from './audio.js';
 import { createWorld, setMoveTarget, updatePlayer } from './world.js';
 import { stateForShot } from './shots.js';
+import { availableRecipes } from './recipes.js';
+import {
+  discardCarried,
+  freshKitchen,
+  interactAtStation as mechanicsInteract,
+  selectPantryBin,
+  updateMechanics,
+} from './mechanics.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -19,6 +27,7 @@ const shot = params.get('shot');
 const seededState = shot ? stateForShot(shot) : null;
 
 function freshState() {
+  const kitchen = freshKitchen();
   return {
     screen: 'title',
     now: 0,
@@ -30,7 +39,19 @@ function freshState() {
     served: 0,
     missed: 0,
     orders: [],
-    carried: [],
+    carried: kitchen.carried,
+    plate: kitchen.plate,
+    burners: kitchen.burners,
+    pantryIndex: kitchen.pantryIndex,
+    chop: kitchen.chop,
+    particles: kitchen.particles,
+    floaters: kitchen.floaters,
+    shake: kitchen.shake,
+    servedAttempts: kitchen.servedAttempts,
+    correctServes: kitchen.correctServes,
+    lastTickBeat: kitchen.lastTickBeat,
+    sizzleTimer: kitchen.sizzleTimer,
+    chopSoundTimer: kitchen.chopSoundTimer,
     toast: null,
     world: createWorld(),
     nextOrderIn: 6,
@@ -63,10 +84,13 @@ function endShift() {
   sfx.fail();
 }
 
-// Phase 1: orders arrive on a schedule and count down; serving and
-// missing are wired in phase 2. A sample order keeps the board alive.
+// Orders arrive on a schedule and count down. The board unlocks longer
+// recipes as the shift goes on; a missed order costs a heart, resets the
+// combo and shakes the screen.
 function makeOrder() {
-  const recipe = RECIPES[state.orderSeq % RECIPES.length];
+  const elapsed = SHIFT_SECONDS - state.timeLeft;
+  const pool = availableRecipes(elapsed);
+  const recipe = pool[state.orderSeq % pool.length];
   state.orderSeq += 1;
   return {
     id: `order-${state.orderSeq}`,
@@ -98,29 +122,18 @@ function tickOrders(dt) {
     state.missed += expired.length;
     state.hearts = Math.max(0, state.hearts - expired.length);
     state.combo = 0;
+    state.shake = 0.35;
     showToast(`Order missed — ${expired.length} heart${expired.length > 1 ? 's' : ''} lost!`);
     sfx.fail();
     if (state.hearts <= 0) endShift();
   }
 }
 
-// Phase 1 placeholder interact: names the station and shows a toast.
-// Phase 2 replaces this with pantry/chop/cook/assemble/serve actions.
+// All station actions live in mechanics.js — pantry, chop, cook,
+// assemble and serve. E (or clicking a station) dispatches here.
 function interactAtStation() {
-  const station = state.world.nearStation;
-  if (!station) {
-    showToast('Walk up to a station to use it.');
-    return;
-  }
-  sfx.click();
-  const hints = {
-    pantry: 'Pantry: grab an ingredient (coming in phase 2).',
-    chopping: 'Chopping board: chop it here (coming in phase 2).',
-    stove: 'Stove: mind the burn timer (coming in phase 2).',
-    assembly: 'Assembly: plate your dish here (coming in phase 2).',
-    serving: 'Serving window: hand dishes over (coming in phase 2).',
-  };
-  showToast(hints[station.id] ?? `Using ${station.label}.`);
+  if (state.screen !== 'play') return;
+  mechanicsInteract(state, showToast);
 }
 
 function onPointerDown(x, y) {
@@ -156,6 +169,14 @@ const input = createInput(
     if (state.screen === 'title') startShift();
     else if (state.screen === 'end') state = freshState();
   },
+  () => {
+    if (state.screen === 'play') discardCarried(state, showToast);
+  },
+  (index) => {
+    if (state.screen === 'play' && state.world.nearStation?.id === 'pantry') {
+      selectPantryBin(state, index, showToast);
+    }
+  },
 );
 input.onPointerDown = onPointerDown;
 
@@ -167,7 +188,9 @@ function frame(now) {
   if (state.screen === 'play') {
     updatePlayer(state.world, input.moveX, input.moveY, dt);
     // Arrived at a clicked station: use it once, then clear the request.
-    if (pendingStationUse && !state.world.player.target) {
+    // (Also fires at once when the chef is already standing at the
+    // clicked station, so a click on a nearby station acts immediately.)
+    if (pendingStationUse && (!state.world.player.target || state.world.nearStation?.id === pendingStationUse)) {
       if (state.world.nearStation?.id === pendingStationUse) interactAtStation();
       pendingStationUse = null;
     }
@@ -177,6 +200,7 @@ function frame(now) {
     } else {
       spawnOrders(dt);
       tickOrders(dt);
+      updateMechanics(state, input, dt, showToast);
     }
   }
   if (state.toast) {
