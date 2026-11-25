@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ember &amp; Thyme — Rush Hour Kitchen</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #1d140d;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: system-ui, sans-serif;
+  }
+  #wrap { text-align: center; }
+  canvas {
+    display: block;
+    max-width: 96vw;
+    max-height: 92vh;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+    image-rendering: auto;
+  }
+  #hint {
+    color: #d8c9ae;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="600"></canvas>
+  <div id="hint">WASD / arrows to move &middot; click to walk &middot; E to use a station</div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
