@@ -3,7 +3,7 @@
 // renderer is pure drawing: it takes the game state and paints it.
 
 import { CANVAS, INGREDIENTS, PALETTE, PANTRY_ORDER, STATIONS } from './config.js';
-import { prepSecondsFor } from './recipes.js';
+import { matchingOrder, prepSecondsFor } from './recipes.js';
 import { drawEffects } from './effects.js';
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -53,6 +53,18 @@ function drawFloor(ctx) {
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
+  // A woven rug in the middle of the floor so the open kitchen does
+  // not read as one big empty checkerboard.
+  ctx.fillStyle = '#a06a35';
+  roundRect(ctx, 340, 392, 280, 96, 14);
+  ctx.fill();
+  ctx.strokeStyle = '#7a4a2b';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(232, 220, 200, 0.5)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, 352, 404, 256, 72, 10);
+  ctx.stroke();
 }
 
 function drawWall(ctx) {
@@ -241,13 +253,17 @@ function drawStation(ctx, station, highlighted, state) {
     ctx.fillStyle = '#2b2118';
     ctx.fillRect(x + w / 2 - 16, y + 30, 32, 12);
   } else if (station.id === 'assembly') {
+    // A plate that matches an open order is READY: green ring + label
+    // so the serveable state reads at a glance.
+    const ready = matchingOrder(state.plate ?? [], state.orders);
     ctx.fillStyle = '#fff8ec';
     ctx.beginPath();
     ctx.ellipse(x + w / 2, y + 50, 42, 14, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#b8a888';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = ready ? PALETTE.good : '#b8a888';
+    ctx.lineWidth = ready ? 3 : 2;
     ctx.stroke();
+    if (ready) drawText(ctx, '✓ READY', x + w / 2, y + 27, 11, PALETTE.good, 'center', '800');
     // The real plate stack: each plated item sits on the plate.
     const plate = state.plate ?? [];
     plate.forEach((item, i) => {

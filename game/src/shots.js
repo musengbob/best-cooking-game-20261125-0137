@@ -62,17 +62,21 @@ export function stateForShot(shot) {
     state.bestCombo = 3;
     state.served = 4;
     state.orders = sampleOrders();
-    // Chef stands at the assembly counter with a half-built dish: one
-    // tomato already plated, a chopped lettuce in hand.
+    // Chef stands at the assembly counter with a FINISHED dish: the
+    // Garden Salad (tomato + lettuce) is fully plated and matches the
+    // open order, so the plate reads as ready to serve.
     state.world.player.x = 621;
     state.world.player.y = 210;
-    state.plate = [{ key: 'tomato', prep: 'ready' }];
-    state.carried = [{ key: 'lettuce', prep: 'ready' }];
+    state.plate = [
+      { key: 'tomato', prep: 'ready' },
+      { key: 'lettuce', prep: 'ready' },
+    ];
+    state.carried = [];
     // Burner 0 mid-cook (ring half full), burner 1 burnt — shows both
     // stove states in the screenshot.
     state.burners[0] = { item: { key: 'patty', prep: 'raw' }, progress: 2.5, cooked: false, burnt: false };
     state.burners[1] = { item: { key: 'cheese', prep: 'burnt' }, progress: 6.0, cooked: true, burnt: true };
-    state.toast = { text: 'Plating Garden Salad… 2 of 2 ready!', life: 2 };
+    state.toast = { text: 'Garden Salad ready — serve it at the window!', life: 30 };
     return state;
   }
   if (shot === 'end') {
