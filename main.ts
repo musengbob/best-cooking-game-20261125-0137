@@ -10,7 +10,7 @@
 //
 // Local check:  mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -27,9 +27,13 @@ function resolveOutputDir(): string {
 const outDir = resolveOutputDir();
 
 // Start from a clean slate so a stale file from an earlier run can never
-// leak into the hand-in.
-rmSync(outDir, { recursive: true, force: true });
+// leak into the hand-in. Clear the directory's CONTENTS only: the grader
+// mounts /output as a filesystem, and removing the mount point itself
+// throws EBUSY (exit 1) — that killed round 1.
 mkdirSync(outDir, { recursive: true });
+for (const name of readdirSync(outDir)) {
+  rmSync(join(outDir, name), { recursive: true, force: true });
+}
 cpSync(join(repoRoot, 'game'), join(outDir, 'game'), { recursive: true });
 mkdirSync(join(outDir, 'screenshots'), { recursive: true });
 if (existsSync(join(repoRoot, 'screenshots'))) {
